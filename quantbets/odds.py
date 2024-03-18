@@ -114,3 +114,31 @@ class Odds:
                     f"American: {american_str}, Probability: {self.odds_to_probability()}")
         except Exception as e:
             return f"Error converting odds formats: {e}"
+        
+def calculate_true_odds(odds_df, tax_rate=0):
+    """
+    Calculate true odds by removing the vigorish (vig) and applying tax adjustment.
+
+    Parameters:
+    - odds_df (DataFrame): DataFrame containing the odds data. The DataFrame should have a column named 'odds'.
+    - tax_rate (float): Tax rate as a percentage (default: 0).
+
+    Returns:
+    - DataFrame: Updated DataFrame with true odds calculated.
+    """
+
+    # Convert decimal odds to implied probabilities and calculate market percentage
+    odds_df['market_probability'] = 1 / odds_df['odds']
+    market_percentage = odds_df['market_probability'].sum()
+
+    # Adjust probabilities for overround
+    odds_df['adjusted_probability'] = odds_df['market_probability'] / market_percentage
+
+    # Apply tax adjustment (if any)
+    tax_multiplier = 1 - (tax_rate / 100)
+    odds_df['adjusted_probability'] = odds_df['adjusted_probability'] * tax_multiplier
+
+    # Convert adjusted probabilities back to decimal odds
+    odds_df['true_odds'] = 1 / odds_df['adjusted_probability']
+
+    return odds_df
